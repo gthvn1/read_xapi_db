@@ -25,19 +25,19 @@ include `find` and more advanced queries.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/xapidb-cli.git
-cd xapidb-cli
+git clone https://github.com/gthvn1/read_xapi_db
+cd read_xapi_db
 ```
 
 2. Build the project:
 
 ```bash
-go build -o xapi-cli main.go
+go build -o xdb-cli .
 ```
 
 3. Usage
 
 ```bash
-./xapi-cli database.xml
+./xdb-cli database.xml
 ```
 - where `database.xml` is the path of the XAPI database.
