@@ -33,9 +33,21 @@ func main() {
 	// Instead of printing the tree we will try to use the demo of navigable
 	// tree view of current dir: https://github.com/rivo/tview/wiki/TreeView
 	rootTree := makeTreeNode(rootNode)
-	tree := tview.NewTreeView().
-		SetRoot(rootTree).
-		SetCurrentNode(rootTree)
+
+	// Load children immediately for root
+	loadChildren(rootTree, rootNode)
+
+	rootTree.SetExpanded(true)
+
+	tree := tview.NewTreeView().SetRoot(rootTree)
+
+	// Set current node to first child if it exists
+	if len(rootTree.GetChildren()) > 0 {
+		tree.SetCurrentNode(rootTree.GetChildren()[0])
+	} else {
+		tree.SetCurrentNode(rootTree)
+	}
+
 	// Set border and title are done separatly otherwise the type of tree is
 	// modified to tview.Box instead of TreeView !!!
 	tree.SetBorder(true).SetTitle("XAPI DB")
@@ -57,12 +69,9 @@ func main() {
 		// Update status
 		updateStatus(status, node)
 
-		// Load children only once
-		children := tn.GetChildren()
-		if len(children) == 0 {
-			for _, c := range node.Children {
-				tn.AddChild(makeTreeNode(c))
-			}
+		// Load children if not already loaded
+		if len(tn.GetChildren()) == 0 && len(node.Children) > 0 {
+			loadChildren(tn, node)
 		}
 		// Collapse if visible, expand if collapsed.
 		tn.SetExpanded(!tn.IsExpanded())
@@ -90,6 +99,12 @@ func main() {
 	}
 }
 
+func loadChildren(tn *tview.TreeNode, n *xapidb.Node) {
+	for _, c := range n.Children {
+		tn.AddChild(makeTreeNode(c))
+	}
+}
+
 func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
 	label := n.Name
 
@@ -106,6 +121,10 @@ func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
 	t := tview.NewTreeNode(label)
 	t.SetReference(n) // This maps the tree view with our node
 	t.SetSelectable(true)
+
+	if len(n.Children) > 0 {
+		t.SetExpanded(false) // This should show expandable sign
+	}
 
 	switch n.Name {
 	case "database":
