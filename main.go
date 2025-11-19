@@ -39,7 +39,7 @@ func main() {
 
 	rootTree.SetExpanded(true)
 
-	tree := tview.NewTreeView().SetRoot(rootTree)
+	tree := tview.NewTreeView()
 
 	// Set current node to first child if it exists
 	if len(rootTree.GetChildren()) > 0 {
@@ -50,12 +50,13 @@ func main() {
 
 	// Set border and title are done separatly otherwise the type of tree is
 	// modified to tview.Box instead of TreeView !!!
-	tree.SetBorder(true).SetTitle("XAPI DB")
+	tree.SetRoot(rootTree).
+		SetBorder(true).
+		SetTitle("XAPI DB")
 
 	// We add a status view to print all row attributes for example
-	status := tview.NewTextView().
-		SetDynamicColors(true)
-	status.SetBorder(true).SetTitle("Status")
+	status := tview.NewTextView()
+	status.SetDynamicColors(true).SetBorder(true).SetTitle("Status")
 
 	// If a directory was selected, open it.
 	tree.SetSelectedFunc(func(tn *tview.TreeNode) {
@@ -118,27 +119,28 @@ func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
 		label += fmt.Sprintf(" [ref=%s]", ref)
 	}
 
-	t := tview.NewTreeNode(label)
-	t.SetReference(n) // This maps the tree view with our node
-	t.SetSelectable(true)
+	tn := tview.NewTreeNode(label)
+	tn.SetReference(n) // This maps the tree view with our node
+	tn.SetSelectable(true)
 
 	if len(n.Children) > 0 {
-		t.SetExpanded(false) // This should show expandable sign
+		fmt.Printf("Node %s has %d children\n", label, len(n.Children))
+		tn.SetExpanded(false) // This should show expandable sign
 	}
 
 	switch n.Name {
 	case "database":
-		t.SetColor(tcell.ColorRed)
+		tn.SetColor(tcell.ColorRed)
 	case "table":
-		t.SetColor(tcell.ColorGreen)
+		tn.SetColor(tcell.ColorGreen)
 	case "row":
-		t.SetColor(tcell.ColorBlue)
+		tn.SetColor(tcell.ColorBlue)
 	default:
-		t.SetColor(tcell.ColorWhite)
+		tn.SetColor(tcell.ColorWhite)
 	}
 
 	// Just create the node, we will add children later
-	return t
+	return tn
 }
 
 func updateStatus(tv *tview.TextView, n *xapidb.Node) {
