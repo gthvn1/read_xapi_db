@@ -33,7 +33,17 @@ func main() {
 	// Instead of printing the tree we will try to use the demo of navigable
 	// tree view of current dir: https://github.com/rivo/tview/wiki/TreeView
 	rootTree := makeTreeNode(rootNode)
-	tree := tview.NewTreeView().SetRoot(rootTree).SetCurrentNode(rootTree)
+	tree := tview.NewTreeView().
+		SetRoot(rootTree).
+		SetCurrentNode(rootTree)
+	// Set border and title are done separatly otherwise the type of tree is
+	// modified to tview.Box instead of TreeView !!!
+	tree.SetBorder(true).SetTitle("XAPI DB")
+
+	// We add a status view to print all row attributes for example
+	status := tview.NewTextView().
+		SetDynamicColors(true)
+	status.SetBorder(true).SetTitle("Status")
 
 	// If a directory was selected, open it.
 	tree.SetSelectedFunc(func(tn *tview.TreeNode) {
@@ -43,6 +53,9 @@ func main() {
 		}
 
 		node := ref.(*xapidb.Node)
+
+		// Update status
+		updateStatus(status, node)
 
 		// Load children only once
 		children := tn.GetChildren()
@@ -55,7 +68,12 @@ func main() {
 		tn.SetExpanded(!tn.IsExpanded())
 	})
 
-	if err := tview.NewApplication().SetRoot(tree, true).Run(); err != nil {
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(tree, 0, 1, true).
+		AddItem(status, 40, 0, false)
+
+	if err := tview.NewApplication().SetRoot(layout, true).Run(); err != nil {
 		panic(err)
 	}
 }
@@ -90,4 +108,34 @@ func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
 
 	// Just create the node, we will add children later
 	return t
+}
+
+func updateStatus(tv *tview.TextView, n *xapidb.Node) {
+	tv.Clear()
+
+	fmt.Fprintf(tv, "[yellow]Name:[white] %s\n", n.Name)
+
+	if len(n.Attr) > 0 {
+		fmt.Fprintf(tv, "[yellow]Attributes:[white]\n")
+		for k, v := range n.Attr {
+			fmt.Fprintf(tv, "  %s = %q\n", k, v)
+		}
+	} else {
+		fmt.Fprintf(tv, "[yellow]Attributes:[white] (none)\n")
+	}
+
+	fmt.Fprintf(tv, "[yellow]Children:[white] %d\n", len(n.Children))
+
+	// Compute path
+	path := ""
+	cur := n
+	for cur != nil {
+		if cur.Parent != nil {
+			path = "/" + cur.Name + path
+		} else {
+			path = "/database" + path
+		}
+		cur = cur.Parent
+	}
+	fmt.Fprintf(tv, "[yellow]Path:[white] %s\n", path)
 }
