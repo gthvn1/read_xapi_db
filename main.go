@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -44,7 +43,7 @@ func main() {
 	// A helper function which adds the files and directories of the given path
 	// to the given target node.
 	add := func(target *tview.TreeNode, path string) {
-		files, err := ioutil.ReadDir(path)
+		files, err := os.ReadDir(path)
 		if err != nil {
 			panic(err)
 		}
