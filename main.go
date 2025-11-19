@@ -73,7 +73,19 @@ func main() {
 		AddItem(tree, 0, 1, true).
 		AddItem(status, 40, 0, false)
 
-	if err := tview.NewApplication().SetRoot(layout, true).Run(); err != nil {
+	app := tview.NewApplication()
+
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		// Detect "q"
+		if event.Rune() == 'q' {
+			app.Stop()
+			return nil
+		}
+
+		return event
+	})
+
+	if err := app.SetRoot(layout, true).Run(); err != nil {
 		panic(err)
 	}
 }
