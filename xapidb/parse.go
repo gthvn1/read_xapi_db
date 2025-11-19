@@ -151,7 +151,6 @@ func ParseXapiDB(data []byte) (*Node, error) {
 		switch t := tok.(type) {
 		case xml.StartElement:
 			fmt.Println("Found start element", t.Name.Local)
-			// Create node only for table
 			n := &Node{
 				Name:     t.Name.Local,
 				Attr:     map[string]string{},
