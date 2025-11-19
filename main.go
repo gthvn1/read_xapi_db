@@ -78,10 +78,22 @@ func main() {
 		tn.SetExpanded(!tn.IsExpanded())
 	})
 
-	layout := tview.NewFlex().
+	// Add help footer
+	help := tview.NewTextView()
+	help.SetTextAlign(tview.AlignCenter).SetDynamicColors(true)
+	help.SetText("[yellow]Press [white]'q'[yellow] to quit | [white]'Space/Enter'[yellow] to expand/collapse")
+	help.SetBackgroundColor(tcell.ColorDefault)
+
+	// Create main Layout with tree and status
+	mainLayout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(tree, 0, 1, true).
-		AddItem(status, 40, 0, false)
+		AddItem(status, 50, 0, false)
+
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(mainLayout, 0, 1, true).
+		AddItem(help, 1, 0, false)
 
 	app := tview.NewApplication()
 
