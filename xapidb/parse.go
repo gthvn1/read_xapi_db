@@ -150,7 +150,6 @@ func ParseXapiDB(data []byte) (*Node, error) {
 
 		switch t := tok.(type) {
 		case xml.StartElement:
-			fmt.Println("Found start element", t.Name.Local)
 			n := &Node{
 				Name:     t.Name.Local,
 				Attr:     map[string]string{},
@@ -159,7 +158,6 @@ func ParseXapiDB(data []byte) (*Node, error) {
 
 			// Set attributes
 			for _, a := range t.Attr {
-				fmt.Printf("  set %s -> %s\n", a.Name.Local, a.Value)
 				n.Attr[a.Name.Local] = a.Value
 			}
 
@@ -169,14 +167,12 @@ func ParseXapiDB(data []byte) (*Node, error) {
 				n.Parent = parent
 				parent.Children = append(parent.Children, n)
 			} else {
-				fmt.Println("Setting root to", n.Name)
 				root = n
 			}
 
 			stack = append(stack, n)
 
 		case xml.EndElement:
-			fmt.Println("Found end element", t.Name.Local)
 			stack = stack[:len(stack)-1]
 		}
 	}
