@@ -70,8 +70,23 @@ func main() {
 		SetBorder(true).
 		SetTitle("Status")
 
+	// Add search input (initially hidden)
+	searchInput := tview.NewInputField()
+	searchInput.SetLabel("Seach: ").
+		SetFieldWidth(50).
+		SetBorder(true).
+		SetTitle("Search (ESC to cancel)")
+
+	// Search results view
+	searchResults := tview.NewTextView()
+	searchResults.SetDynamicColors(true).
+		SetScrollable(true).
+		SetBorder(true).
+		SetTitle("Search Results")
+
 	// Track which pane has focus
 	var currentFocus tview.Primitive = tree
+	searchMode := false
 
 	// If a directory was selected, open it.
 	tree.SetSelectedFunc(func(tn *tview.TreeNode) {
@@ -94,7 +109,7 @@ func main() {
 	// Add help footer
 	help := tview.NewTextView()
 	help.SetTextAlign(tview.AlignCenter).SetDynamicColors(true)
-	help.SetText("[yellow]Press [white]'q'[yellow] to quit | [white]'Space/Enter'[yellow] to expand/collapse")
+	help.SetText("[yellow]'q'[white]=quit | [yellow]'/'[white]=search | [yellow]'Space/Enter'[white]=expand/collapse")
 	help.SetBackgroundColor(tcell.ColorDefault)
 
 	// Create main Layout with tree and status
@@ -103,10 +118,21 @@ func main() {
 		AddItem(tree, 0, 1, true).
 		AddItem(status, 0, 1, false)
 
-	layout := tview.NewFlex().
+	// We create 2 pages so we will be able to switch between
+	// normal view and search view
+	normalLayout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(mainLayout, 0, 1, true).
 		AddItem(help, 1, 0, false)
+
+	searchLayout := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(searchInput, 3, 0, true).
+		AddItem(searchResults, 0, 1, true)
+
+	pages := tview.NewPages().
+		AddPage("normal", normalLayout, true, true).
+		AddPage("search", searchLayout, true, false)
 
 	tview.Styles = theme.GruvboxDark
 
@@ -117,8 +143,18 @@ func main() {
 		case tcell.KeyRune:
 			switch event.Rune() {
 			case 'q':
-				app.Stop()
-				return nil
+				if !searchMode {
+					app.Stop()
+					return nil
+				}
+
+			case '/':
+				// switch to search mode if not already in
+				if !searchMode {
+					searchMode = true
+					pages.SwitchToPage("search")
+					return nil
+				}
 
 			case 'h', 'l':
 				// switch between tree and status
@@ -134,6 +170,7 @@ func main() {
 				app.SetFocus(currentFocus)
 				return nil
 			}
+
 		case tcell.KeyTab:
 			// switch between tree and status
 			if currentFocus == tree {
@@ -147,6 +184,14 @@ func main() {
 			}
 			app.SetFocus(currentFocus)
 			return nil
+
+		case tcell.KeyEscape:
+			searchMode = false
+			pages.SwitchToPage("normal")
+			currentFocus = tree
+			tree.SetBorderColor(tcell.ColorGreen)
+			app.SetFocus(tree)
+			return nil
 		}
 
 		return event
@@ -156,7 +201,7 @@ func main() {
 	tree.SetBorderColor(tcell.ColorGreen)
 	status.SetBorderColor(tcell.ColorWhite)
 
-	if err := app.SetRoot(layout, true).Run(); err != nil {
+	if err := app.SetRoot(pages, true).Run(); err != nil {
 		panic(err)
 	}
 }
