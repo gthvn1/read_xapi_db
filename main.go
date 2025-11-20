@@ -174,7 +174,7 @@ func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
 
 	// If there is a name attribute add it (it is the case for table)
 	if name, ok := n.Attr["name"]; ok {
-		label += fmt.Sprintf(" (%s)", name)
+		label += fmt.Sprintf(" (%s) %d", name, len(n.Children))
 	}
 
 	// If there is a ref add it (it is the case for row)
