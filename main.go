@@ -11,8 +11,6 @@ import (
 	"example.com/readxapidb/xapidb"
 )
 
-var XAPIDB = "./xapi-db.xml"
-
 var Monokai = tview.Theme{
 	PrimitiveBackgroundColor:    tcell.NewHexColor(0x272822), // background
 	ContrastBackgroundColor:     tcell.NewHexColor(0x3E3D32), // darker background
@@ -28,17 +26,30 @@ var Monokai = tview.Theme{
 }
 
 func main() {
-	data, err := os.ReadFile(XAPIDB)
-	if err != nil {
-		fmt.Printf("failed to read %s: %s\n", XAPIDB, err)
+	dbFile := "./xapi-db.xml"
+
+	switch len(os.Args) {
+	case 2:
+		dbFile = os.Args[1]
+	case 1:
+	// Use default
+	default:
+		fmt.Printf("Usage: %s [dbfile.xml]\n", os.Args[0])
+		fmt.Printf("If no file is provided, the default is: %s\n", dbFile)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Read %d bytes from %s\n", len(data), XAPIDB)
+	data, err := os.ReadFile(dbFile)
+	if err != nil {
+		fmt.Printf("failed to read %s: %s\n", dbFile, err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Read %d bytes from %s\n", len(data), dbFile)
 
 	rootNode, parse_err := xapidb.ParseXapiDB(data)
 	if parse_err != nil && parse_err != io.EOF {
-		fmt.Printf("failed to parse %s: %s\n", XAPIDB, parse_err)
+		fmt.Printf("failed to parse %s: %s\n", dbFile, parse_err)
 		os.Exit(2)
 	}
 
