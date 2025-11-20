@@ -103,7 +103,7 @@ func main() {
 	mainLayout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(tree, 0, 1, true).
-		AddItem(status, 50, 0, false)
+		AddItem(status, 0, 1, false)
 
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
