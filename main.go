@@ -120,6 +120,19 @@ func main() {
 				app.SetFocus(currentFocus)
 				return nil
 			}
+		case tcell.KeyTab:
+			// switch between tree and status
+			if currentFocus == tree {
+				currentFocus = status
+				tree.SetBorderColor(tcell.ColorWhite)
+				status.SetBorderColor(tcell.ColorGreen)
+			} else {
+				currentFocus = tree
+				tree.SetBorderColor(tcell.ColorGreen)
+				status.SetBorderColor(tcell.ColorWhite)
+			}
+			app.SetFocus(currentFocus)
+			return nil
 		}
 
 		return event
