@@ -31,3 +31,6 @@ go build .
 ./readxapidb database.xml
 ```
 - where `database.xml` is the path of the XAPI database (currently it is hard coded to "xapi-db.ml").
+
+---
+<img src="https://github.com/gthvn1/read_xapi_db/blob/master/screenshot.png">
