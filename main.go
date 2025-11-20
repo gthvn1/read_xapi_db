@@ -171,8 +171,11 @@ func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
 	tn.SetSelectable(true)
 
 	if len(n.Children) > 0 {
-		fmt.Printf("Node %s has %d children\n", label, len(n.Children))
 		tn.SetExpanded(false) // This should show expandable sign
+		tn.SetText("[yellow]+[white] " + label)
+	} else {
+		tn.SetExpanded(true) // This should show expandable sign
+		tn.SetText("[white]-[white] " + label)
 	}
 
 	switch n.Name {
