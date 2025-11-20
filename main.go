@@ -33,10 +33,7 @@ func main() {
 	// Instead of printing the tree we will try to use the demo of navigable
 	// tree view of current dir: https://github.com/rivo/tview/wiki/TreeView
 	rootTree := makeTreeNode(rootNode)
-
-	// Load children immediately for root
 	loadChildren(rootTree, rootNode)
-
 	rootTree.SetExpanded(true)
 
 	tree := tview.NewTreeView()
@@ -56,7 +53,13 @@ func main() {
 
 	// We add a status view to print all row attributes for example
 	status := tview.NewTextView()
-	status.SetDynamicColors(true).SetBorder(true).SetTitle("Status")
+	status.SetDynamicColors(true).
+		SetScrollable(true).
+		SetBorder(true).
+		SetTitle("Status")
+
+	// Track which pane has focus
+	var currentFocus tview.Primitive = tree
 
 	// If a directory was selected, open it.
 	tree.SetSelectedFunc(func(tn *tview.TreeNode) {
@@ -66,8 +69,6 @@ func main() {
 		}
 
 		node := ref.(*xapidb.Node)
-
-		// Update status
 		updateStatus(status, node)
 
 		// Load children if not already loaded
@@ -98,14 +99,35 @@ func main() {
 	app := tview.NewApplication()
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		// Detect "q"
-		if event.Rune() == 'q' {
-			app.Stop()
-			return nil
+		switch event.Key() {
+		case tcell.KeyRune:
+			switch event.Rune() {
+			case 'q':
+				app.Stop()
+				return nil
+
+			case 'h', 'l':
+				// switch between tree and status
+				if currentFocus == tree {
+					currentFocus = status
+					tree.SetBorderColor(tcell.ColorWhite)
+					status.SetBorderColor(tcell.ColorGreen)
+				} else {
+					currentFocus = tree
+					tree.SetBorderColor(tcell.ColorGreen)
+					status.SetBorderColor(tcell.ColorWhite)
+				}
+				app.SetFocus(currentFocus)
+				return nil
+			}
 		}
 
 		return event
 	})
+
+	// Set initial focus
+	tree.SetBorderColor(tcell.ColorGreen)
+	status.SetBorderColor(tcell.ColorWhite)
 
 	if err := app.SetRoot(layout, true).Run(); err != nil {
 		panic(err)
