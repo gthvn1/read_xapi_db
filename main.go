@@ -1,44 +1,53 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/pkg/sftp"
 	"github.com/rivo/tview"
+
+	"golang.org/x/crypto/ssh"
 
 	"example.com/readxapidb/theme"
 	"example.com/readxapidb/xapidb"
 )
 
 func main() {
-	dbFile := "./xapi-db.xml"
+	args := getArgs()
 
-	switch len(os.Args) {
-	case 2:
-		dbFile = os.Args[1]
-	case 1:
-	// Use default
-	default:
-		fmt.Printf("Usage: %s [dbfile.xml]\n", os.Args[0])
-		fmt.Printf("If no file is provided, the default is: %s\n", dbFile)
-		os.Exit(1)
+	var (
+		data []byte
+		err  error
+	)
+
+	if args.Hostname == "" {
+		// Local database is used
+		data, err = os.ReadFile(args.FileName)
+	} else {
+		data, err = FetchFileSFTP(args.Username, args.Password, args.Hostname, args.FileName)
 	}
 
-	data, err := os.ReadFile(dbFile)
 	if err != nil {
-		fmt.Printf("failed to read %s: %s\n", dbFile, err)
+		if args.Hostname == "" {
+			fmt.Printf("failed to read %s: %s\n", args.FileName, err)
+		} else {
+			fmt.Printf("failed to fetch %s from %s: %s\n", args.FileName, args.Hostname, err)
+		}
 		os.Exit(1)
 	}
 
-	fmt.Printf("Read %d bytes from %s\n", len(data), dbFile)
+	fmt.Printf("Read %d bytes from %s\n", len(data), args.FileName)
 
 	DB, parse_err := xapidb.ParseXapiDB(data)
 	if parse_err != nil && parse_err != io.EOF {
-		fmt.Printf("failed to parse %s: %s\n", dbFile, parse_err)
-		os.Exit(2)
+		fmt.Printf("failed to parse %s: %s\n", args.FileName, parse_err)
+		os.Exit(1)
 	}
 
 	rootNode := DB.Root
@@ -291,4 +300,62 @@ func updateStatus(tv *tview.TextView, n *xapidb.Node) {
 		cur = cur.Parent
 	}
 	fmt.Fprintf(tv, "[yellow]Path:[white] %s\n", path)
+}
+
+type Args struct {
+	Username string
+	Password string
+	Hostname string
+	FileName string
+}
+
+func getArgs() Args {
+	fileName := flag.String("file", "", "Local database file path (used if -hostname is not provided)")
+	username := flag.String("username", "", "SSH username (for remote fetch)")
+	password := flag.String("password", "", "SSH password (for remote fetch)")
+	hostname := flag.String("hostname", "", "Remote host (leave empty for local file)")
+
+	flag.Parse()
+
+	if *fileName == "" {
+		fmt.Println("Error: -file is required")
+		flag.Usage()
+		os.Exit(1)
+	}
+	return Args{
+		FileName: *fileName,
+		Username: *username,
+		Password: *password,
+		Hostname: *hostname,
+	}
+}
+
+func FetchFileSFTP(username, password, host, filePath string) ([]byte, error) {
+	config := &ssh.ClientConfig{
+		User: username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(password),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         5 * time.Second,
+	}
+
+	conn, err := ssh.Dial("tcp", host+":22", config)
+	if err != nil {
+		return nil, err
+	}
+
+	sftpClient, err := sftp.NewClient(conn)
+	if err != nil {
+		return nil, err
+	}
+	defer sftpClient.Close()
+
+	f, err := sftpClient.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return io.ReadAll(f)
 }
