@@ -66,7 +66,11 @@ func main() {
 
 	// We add a status view to print all row attributes for example
 	status := tview.NewTable()
-	status.SetBorder(true).
+	status.SetBorders(true).
+		SetSelectable(true, false).
+		SetSelectedStyle(tcell.Style{}.
+			Background(tcell.NewHexColor(0x504945)).
+			Foreground(tcell.NewHexColor(0xfabd2f))).
 		SetTitle("Attributes")
 
 	// Add search input (initially hidden)
@@ -116,7 +120,7 @@ func main() {
 	mainLayout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(tree, 0, 1, true).
-		AddItem(status, 0, 1, false)
+		AddItem(status, 75, 0, false)
 
 	// We create 2 pages so we will be able to switch between
 	// normal view and search view

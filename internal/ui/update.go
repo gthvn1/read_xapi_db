@@ -40,6 +40,7 @@ func UpdateStatus(tv *tview.Table, n *xapidb.Node) {
 			// Highlight OpaqueRefs that we will able to follow (WIP)
 			if strings.HasPrefix(v, "OpaqueRef:") {
 				valCell = tview.NewTableCell("[blue]" + v + "[white]")
+				valCell.SetSelectable(true)
 			}
 
 			tv.SetCell(row, 0, keyCell)
