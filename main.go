@@ -87,6 +87,43 @@ func main() {
 		SetBorder(true).
 		SetTitle("Search Results")
 
+	// Create a debug/info view
+	debugView := tview.NewTextView()
+	debugView.SetDynamicColors(true).
+		SetBorder(true).
+		SetTitle("Debug")
+
+	// Add help footer
+	help := tview.NewTextView()
+	help.SetTextAlign(tview.AlignCenter).SetDynamicColors(true)
+	help.SetText("[yellow]'q'[white]=quit | [yellow]'/'[white]=search | [yellow]'Space/Enter'[white]=expand/collapse")
+	help.SetBackgroundColor(tcell.ColorDefault)
+
+	// Create main Layout with tree and status
+	mainLayout := tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(tree, 0, 1, true).
+		AddItem(status, 75, 0, false)
+
+	// We create 2 pages so we will be able to switch between
+	// normal view and search view
+	normalLayout := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(mainLayout, 0, 1, true).
+		AddItem(debugView, 3, 0, false).
+		AddItem(help, 1, 0, false)
+
+	searchLayout := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(searchInput, 3, 0, true).
+		AddItem(searchResults, 0, 1, true)
+
+	pages := tview.NewPages().
+		AddPage("normal", normalLayout, true, true).
+		AddPage("search", searchLayout, true, false)
+
+	tview.Styles = theme.GruvboxDark
+
 	// Track which pane has focus
 	var currentFocus tview.Primitive = tree
 	searchMode := false
@@ -109,36 +146,6 @@ func main() {
 		// Collapse if visible, expand if collapsed.
 		tn.SetExpanded(!tn.IsExpanded())
 	})
-
-	// Add help footer
-	help := tview.NewTextView()
-	help.SetTextAlign(tview.AlignCenter).SetDynamicColors(true)
-	help.SetText("[yellow]'q'[white]=quit | [yellow]'/'[white]=search | [yellow]'Space/Enter'[white]=expand/collapse")
-	help.SetBackgroundColor(tcell.ColorDefault)
-
-	// Create main Layout with tree and status
-	mainLayout := tview.NewFlex().
-		SetDirection(tview.FlexColumn).
-		AddItem(tree, 0, 1, true).
-		AddItem(status, 75, 0, false)
-
-	// We create 2 pages so we will be able to switch between
-	// normal view and search view
-	normalLayout := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(mainLayout, 0, 1, true).
-		AddItem(help, 1, 0, false)
-
-	searchLayout := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(searchInput, 3, 0, true).
-		AddItem(searchResults, 0, 1, true)
-
-	pages := tview.NewPages().
-		AddPage("normal", normalLayout, true, true).
-		AddPage("search", searchLayout, true, false)
-
-	tview.Styles = theme.GruvboxDark
 
 	app := tview.NewApplication()
 
