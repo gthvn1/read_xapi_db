@@ -268,7 +268,7 @@ func updateStatus(tv *tview.TextView, n *xapidb.Node) {
 		sort.Strings(keys)
 
 		for _, k := range keys {
-			fmt.Fprintf(tv, "  %s = %q\n", k, n.Attr[k])
+			fmt.Fprintf(tv, "  [orange]%s[white] = %q\n", k, n.Attr[k])
 		}
 	} else {
 		fmt.Fprintf(tv, "[yellow]Attributes:[white] (none)\n")
