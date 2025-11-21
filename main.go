@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -259,8 +260,15 @@ func updateStatus(tv *tview.TextView, n *xapidb.Node) {
 
 	if len(n.Attr) > 0 {
 		fmt.Fprintf(tv, "[yellow]Attributes:[white]\n")
-		for k, v := range n.Attr {
-			fmt.Fprintf(tv, "  %s = %q\n", k, v)
+		// We first sort keys
+		keys := make([]string, 0, len(n.Attr))
+		for k := range n.Attr {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			fmt.Fprintf(tv, "  %s = %q\n", k, n.Attr[k])
 		}
 	} else {
 		fmt.Fprintf(tv, "[yellow]Attributes:[white] (none)\n")
