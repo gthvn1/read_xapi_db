@@ -65,11 +65,9 @@ func main() {
 		SetTitle("XAPI DB")
 
 	// We add a status view to print all row attributes for example
-	status := tview.NewTextView()
-	status.SetDynamicColors(true).
-		SetScrollable(true).
-		SetBorder(true).
-		SetTitle("Status")
+	status := tview.NewTable()
+	status.SetBorder(true).
+		SetTitle("Attributes")
 
 	// Add search input (initially hidden)
 	searchInput := tview.NewInputField()
