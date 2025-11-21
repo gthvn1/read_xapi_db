@@ -214,17 +214,19 @@ func loadChildren(tn *tview.TreeNode, n *xapidb.Node) {
 }
 
 func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
-	label := n.Name
+	var label string
 
-	// If there is a name attribute add it (it is the case for table)
+	// If there is a name attribute use it
 	if name, ok := n.Attr["name"]; ok {
-		label += fmt.Sprintf(" (%s)", name)
+		label = fmt.Sprintf(" %s", name)
+	} else {
+		label = fmt.Sprintf(" %s", n.Name)
 	}
 
 	// If there is children print the number so you will know which
 	// node can be unfold
 	if len(n.Children) > 0 {
-		label += fmt.Sprintf(" %d", len(n.Children))
+		label += fmt.Sprintf(" (%d)", len(n.Children))
 	}
 
 	// If there is a name__label add it, it not check if there is a ref.
