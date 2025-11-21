@@ -89,20 +89,21 @@ func main() {
 	var currentFocus tview.Primitive = tree
 	searchMode := false
 
-	// If a directory was selected, open it.
+	// This function is called when the user selects this
+	// node by hitting Enter when selected
 	tree.SetSelectedFunc(func(tn *tview.TreeNode) {
-		ref := tn.GetReference()
-		if ref == nil {
-			return // Selecting the root node does nothing.
-		}
+		// We are always setting a reference so let panic
+		// if it is not the case...
+		node := tn.GetReference().(*xapidb.Node)
 
-		node := ref.(*xapidb.Node)
 		updateStatus(status, node)
 
 		// Load children if not already loaded
 		if len(tn.GetChildren()) == 0 && len(node.Children) > 0 {
 			loadChildren(tn, node)
+			tn.SetExpanded(false)
 		}
+
 		// Collapse if visible, expand if collapsed.
 		tn.SetExpanded(!tn.IsExpanded())
 	})
