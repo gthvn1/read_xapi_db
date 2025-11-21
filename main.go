@@ -34,13 +34,13 @@ func main() {
 
 	fmt.Printf("Read %d bytes from %s\n", len(data), dbFile)
 
-	rootNode, parse_err := xapidb.ParseXapiDB(data)
+	DB, parse_err := xapidb.ParseXapiDB(data)
 	if parse_err != nil && parse_err != io.EOF {
 		fmt.Printf("failed to parse %s: %s\n", dbFile, parse_err)
 		os.Exit(2)
 	}
 
-	//xapidb.PrintTree(t)
+	rootNode := DB.Root
 
 	// Instead of printing the tree we will try to use the demo of navigable
 	// tree view of current dir: https://github.com/rivo/tview/wiki/TreeView

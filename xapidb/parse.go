@@ -96,6 +96,10 @@ import (
 //            Attr: { "ref": "...", ... }
 //            Children: []
 
+type DB struct {
+	Root *Node
+}
+
 type Node struct {
 	Name     string
 	Attr     map[string]string
@@ -103,7 +107,7 @@ type Node struct {
 	Parent   *Node // Will be usefull to deal with "cd .."
 }
 
-func PrintTree(n *Node) {
+func PrintTree(db *DB) {
 	var print func(node *Node, prefix string)
 
 	print = func(node *Node, prefix string) {
@@ -127,10 +131,10 @@ func PrintTree(n *Node) {
 		}
 	}
 
-	print(n, "")
+	print(db.Root, "")
 }
 
-func ParseXapiDB(data []byte) (*Node, error) {
+func ParseXapiDB(data []byte) (*DB, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
 
 	var stack []*Node
@@ -156,8 +160,11 @@ func ParseXapiDB(data []byte) (*Node, error) {
 				Children: []*Node{},
 			}
 
+			//fmt.Printf("Created a new node %s\n", n.Name)
+
 			// Set attributes
 			for _, a := range t.Attr {
+				//fmt.Printf("  adding attr %s -> %s\n", a.Name.Local, a.Value)
 				n.Attr[a.Name.Local] = a.Value
 			}
 
@@ -177,5 +184,5 @@ func ParseXapiDB(data []byte) (*Node, error) {
 		}
 	}
 
-	return root, nil
+	return &DB{Root: root}, nil
 }
