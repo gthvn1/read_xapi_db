@@ -37,7 +37,7 @@ go build .
 #### Local file mode
 
 ```bash
-./readxapidb --file ./xapi-db.xml
+./readxapidb --file ./examples/xapi-db.xml
 ```
 
 #### Remote mode (NEW)
@@ -63,4 +63,4 @@ If `--hostname` is not provided, the tool loads the file locally.
 
 ---
 
-<img src="https://github.com/gthvn1/read_xapi_db/blob/master/screenshot.png">
+<img src="https://github.com/gthvn1/read_xapi_db/blob/master/images/screenshot.png">
