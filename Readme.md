@@ -47,8 +47,8 @@ You can fetch the database directly from any XenServer/XCP-ng host:
 ./readxapidb \
     --hostname xenhost \
     --username root \
-    --password 'mypassword' \
-    --file /var/lib/xcp/xapi-db.xml
+    --password mypassword \
+    --file /var/lib/xcp/state.db
 ```
 - Arguments
 
