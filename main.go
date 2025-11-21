@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -12,6 +11,7 @@ import (
 	"example.com/readxapidb/internal/args"
 	"example.com/readxapidb/internal/fetch"
 	"example.com/readxapidb/internal/theme"
+	"example.com/readxapidb/internal/ui"
 	"example.com/readxapidb/internal/xapidb"
 )
 
@@ -45,8 +45,8 @@ func main() {
 
 	// Instead of printing the tree we will try to use the demo of navigable
 	// tree view of current dir: https://github.com/rivo/tview/wiki/TreeView
-	rootTree := makeTreeNode(rootNode)
-	loadChildren(rootTree, rootNode)
+	rootTree := ui.MakeTreeNode(rootNode)
+	ui.LoadChildren(rootTree, rootNode)
 	rootTree.SetExpanded(true)
 
 	tree := tview.NewTreeView()
@@ -96,11 +96,11 @@ func main() {
 		// if it is not the case...
 		node := tn.GetReference().(*xapidb.Node)
 
-		updateStatus(status, node)
+		ui.UpdateStatus(status, node)
 
 		// Load children if not already loaded
 		if len(tn.GetChildren()) == 0 && len(node.Children) > 0 {
-			loadChildren(tn, node)
+			ui.LoadChildren(tn, node)
 			tn.SetExpanded(false)
 		}
 
@@ -206,89 +206,4 @@ func main() {
 	if err := app.SetRoot(pages, true).Run(); err != nil {
 		panic(err)
 	}
-}
-
-func loadChildren(tn *tview.TreeNode, n *xapidb.Node) {
-	for _, c := range n.Children {
-		tn.AddChild(makeTreeNode(c))
-	}
-}
-
-func makeTreeNode(n *xapidb.Node) *tview.TreeNode {
-	var label string
-
-	// If there is a name attribute use it
-	if name, ok := n.Attr["name"]; ok {
-		label = fmt.Sprintf(" %s", name)
-	} else {
-		label = fmt.Sprintf(" %s", n.Name)
-	}
-
-	// If there is children print the number so you will know which
-	// node can be unfold
-	if len(n.Children) > 0 {
-		label += fmt.Sprintf(" (%d)", len(n.Children))
-	}
-
-	// If there is a name__label add it, it not check if there is a ref.
-	if nameLabel, ok := n.Attr["name__label"]; ok && len(nameLabel) > 0 {
-		label += fmt.Sprintf(" [%s]", nameLabel)
-	} else if ref, ok := n.Attr["ref"]; ok {
-		label += fmt.Sprintf(" [%s]", ref)
-	}
-
-	tn := tview.NewTreeNode(label)
-	tn.SetReference(n) // This maps the tree view with our node
-	tn.SetSelectable(true)
-
-	switch n.Name {
-	case "database":
-		tn.SetColor(tcell.ColorRed)
-	case "table":
-		tn.SetColor(tcell.ColorGreen)
-	case "row":
-		tn.SetColor(tcell.ColorBlue)
-	default:
-		tn.SetColor(tcell.ColorWhite)
-	}
-
-	// Just create the node, we will add children later
-	return tn
-}
-
-func updateStatus(tv *tview.TextView, n *xapidb.Node) {
-	tv.Clear()
-
-	fmt.Fprintf(tv, "[yellow]Name:[white] %s\n", n.Name)
-
-	if len(n.Attr) > 0 {
-		fmt.Fprintf(tv, "[yellow]Attributes:[white]\n")
-		// We first sort keys
-		keys := make([]string, 0, len(n.Attr))
-		for k := range n.Attr {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		for _, k := range keys {
-			fmt.Fprintf(tv, "  [orange]%s[white] = %q\n", k, n.Attr[k])
-		}
-	} else {
-		fmt.Fprintf(tv, "[yellow]Attributes:[white] (none)\n")
-	}
-
-	fmt.Fprintf(tv, "[yellow]Children:[white] %d\n", len(n.Children))
-
-	// Compute path
-	path := ""
-	cur := n
-	for cur != nil {
-		if cur.Parent != nil {
-			path = "/" + cur.Name + path
-		} else {
-			path = "/database" + path
-		}
-		cur = cur.Parent
-	}
-	fmt.Fprintf(tv, "[yellow]Path:[white] %s\n", path)
 }
