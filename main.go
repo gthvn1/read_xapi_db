@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -110,7 +111,7 @@ func main() {
 	normalLayout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(mainLayout, 0, 1, true).
-		AddItem(debugView, 3, 0, false).
+		AddItem(debugView, 5, 0, false).
 		AddItem(help, 1, 0, false)
 
 	searchLayout := tview.NewFlex().
@@ -145,6 +146,32 @@ func main() {
 
 		// Collapse if visible, expand if collapsed.
 		tn.SetExpanded(!tn.IsExpanded())
+	})
+
+	status.SetSelectedFunc(func(row, column int) {
+		valueCell := status.GetCell(row, 1)
+		if valueCell == nil {
+			return
+		}
+
+		text := valueCell.Text
+
+		// Has we have color on OpaqueRef we use the reference to get the
+		// raw string (it has been set during update). If there is no ref
+		// keep using the text.
+		if ref := valueCell.GetReference(); ref != nil {
+			text = ref.(string)
+		}
+
+		debugView.Clear()
+		fmt.Fprintf(debugView, "Text: %s (len=%d)", text, len(text))
+		fmt.Fprintf(debugView, "\nFirst 3 chars: %q", text[:min(3, len(text))])
+
+		if strings.HasPrefix(text, "OpaqueRef") {
+			fmt.Fprintf(debugView, "\n[green]Matched!")
+		} else {
+			fmt.Fprintf(debugView, "\n[red]No match")
+		}
 	})
 
 	app := tview.NewApplication()
