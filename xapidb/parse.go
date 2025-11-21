@@ -97,7 +97,8 @@ import (
 //            Children: []
 
 type DB struct {
-	Root *Node
+	Root     *Node
+	RefIndex map[string]*Node // maps "OpaqueRef:xxx" to a *Node
 }
 
 type Node struct {
@@ -139,6 +140,7 @@ func ParseXapiDB(data []byte) (*DB, error) {
 
 	var stack []*Node
 	var root *Node
+	refIndex := make(map[string]*Node)
 
 	for {
 		// Get the next XML token in the input stream
@@ -177,6 +179,10 @@ func ParseXapiDB(data []byte) (*DB, error) {
 				root = n
 			}
 
+			// Keep cross opaque reference for the node if available
+			if ref, ok := n.Attr["ref"]; ok {
+				refIndex[ref] = n
+			}
 			stack = append(stack, n)
 
 		case xml.EndElement:
