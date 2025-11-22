@@ -125,9 +125,15 @@ func main() {
 
 	tview.Styles = theme.GruvboxDark
 
+	app := tview.NewApplication()
+
 	// Track which pane has focus
 	var currentFocus tview.Primitive = tree
 	searchMode := false
+
+	// -------------------------------------------------------------------
+	// Callbacks
+	// -------------------------------------------------------------------
 
 	// This function is called when the user selects this
 	// node by hitting Enter when selected
@@ -173,8 +179,6 @@ func main() {
 			fmt.Fprintf(debugView, "\n[red]No match")
 		}
 	})
-
-	app := tview.NewApplication()
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
