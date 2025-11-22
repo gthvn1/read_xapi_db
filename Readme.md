@@ -15,7 +15,7 @@ SSH/SFTP**.
 - Browse tables and rows interactively (expand/collapse).
 - View attributes sorted alphabetically.
 - **NEW:** Fetch the XAPI DB directly from a remote XCP-ng host via SSH/SFTP.
-- **WIP:** Follow cross-references (`OpaqueRef:*`) between rows.
+- **NEW:** Follow cross-references (`OpaqueRef:*`) between rows by pressing ENTER.
 
 ## Installation
 

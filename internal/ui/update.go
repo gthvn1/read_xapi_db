@@ -76,3 +76,50 @@ func UpdateStatus(tv *tview.Table, n *xapidb.Node) {
 	tv.SetCell(row, 0, tview.NewTableCell("[yellow]Path[white]"))
 	tv.SetCell(row, 1, tview.NewTableCell(path))
 }
+
+func FollowOpaqueRef(app *tview.Application, tree *tview.TreeView, DB *xapidb.DB, ref string) string {
+	// Find node using the DB ref index
+	target, ok := DB.RefIndex[ref]
+	if !ok {
+		return fmt.Sprintf("Failed to find %s in RefIndex", ref)
+	}
+
+	// Target parent is always the table
+	table := target.Parent
+	if table == nil {
+		return "failed to find the table parent"
+	}
+
+	root := tree.GetRoot()
+	root.SetExpanded(true)
+
+	// Find table node inside the tree
+	var tableTreeNode *tview.TreeNode
+	for _, tn := range root.GetChildren() {
+		if tn.GetReference() == table {
+			tableTreeNode = tn
+			break
+		}
+	}
+
+	if tableTreeNode == nil {
+		return "failed to find the corresponding table in TreeView"
+	}
+
+	// Load rows of the table if not loaded yet
+	LoadChildren(tableTreeNode, table)
+	tableTreeNode.SetExpanded(true)
+
+	// Now find the row node inside the table
+	for _, rowNode := range tableTreeNode.GetChildren() {
+		if rowNode.GetReference() == target {
+			// scroll to it and select it
+			rowNode.SetExpanded(true)
+			tree.SetCurrentNode(rowNode)
+			app.SetFocus(tree)
+			return "done"
+		}
+	}
+
+	return "failed to find the row node inside the table"
+}

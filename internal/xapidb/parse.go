@@ -190,5 +190,5 @@ func ParseXapiDB(data []byte) (*DB, error) {
 		}
 	}
 
-	return &DB{Root: root}, nil
+	return &DB{Root: root, RefIndex: refIndex}, nil
 }

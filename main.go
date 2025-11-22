@@ -174,10 +174,15 @@ func main() {
 		fmt.Fprintf(debugView, "\nFirst 3 chars: %q", text[:min(3, len(text))])
 
 		if strings.HasPrefix(text, "OpaqueRef") {
-			fmt.Fprintf(debugView, "\n[green]Matched!")
+			if retString := ui.FollowOpaqueRef(app, tree, DB, text); retString == "done" {
+				fmt.Fprintf(debugView, "\n[green]Found the opaque reference")
+			} else {
+				fmt.Fprintf(debugView, "\n[red]%s", retString)
+			}
 		} else {
-			fmt.Fprintf(debugView, "\n[red]No match")
+			fmt.Fprintf(debugView, "\n[blue]No match")
 		}
+
 	})
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
