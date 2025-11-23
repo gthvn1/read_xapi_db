@@ -79,14 +79,7 @@ func main() {
 	searchInput.SetLabel("Seach: ").
 		SetFieldWidth(50).
 		SetBorder(true).
-		SetTitle("Search (ESC to cancel)")
-
-	// Search results view
-	searchResults := tview.NewTextView()
-	searchResults.SetDynamicColors(true).
-		SetScrollable(true).
-		SetBorder(true).
-		SetTitle("Search Results")
+		SetTitle("Search")
 
 	// Create a debug/info view
 	debugView := tview.NewTextView()
@@ -107,21 +100,15 @@ func main() {
 		AddItem(status, 75, 0, false)
 
 	// We create 2 pages so we will be able to switch between
-	// normal view and search view
+	// normal view and search view (TODO: search view has been removed)
 	normalLayout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(mainLayout, 0, 1, true).
 		AddItem(debugView, 5, 0, false).
 		AddItem(help, 1, 0, false)
 
-	searchLayout := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(searchInput, 3, 0, true).
-		AddItem(searchResults, 0, 1, true)
-
 	pages := tview.NewPages().
-		AddPage("normal", normalLayout, true, true).
-		AddPage("search", searchLayout, true, false)
+		AddPage("normal", normalLayout, true, true)
 
 	tview.Styles = theme.GruvboxDark
 
@@ -185,6 +172,41 @@ func main() {
 
 	})
 
+	searchInput.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEnter {
+			query := searchInput.GetText()
+
+			if strings.HasPrefix(query, "OpaqueRef") {
+				// Follow the reference
+				result := ui.FollowOpaqueRef(app, tree, DB, query)
+				debugView.Clear()
+				fmt.Fprintf(debugView, "[yellow]Search:[white] %s\n", query)
+				if result == "done" {
+					fmt.Fprintf(debugView, "[green]Found reference!")
+				} else {
+					fmt.Fprintf(debugView, "[red]%s", result)
+				}
+			} else {
+				// TODO: General text search in nodes
+				debugView.Clear()
+				fmt.Fprintf(debugView, "[yellow]Searching for:[white] %s\n", query)
+				fmt.Fprintf(debugView, "[blue]Text search not implemented yet")
+			}
+
+			// Exit search mode
+			searchMode = false
+			normalLayout.RemoveItem(searchInput)
+			searchInput.SetText("") // Clear for next time
+			app.SetFocus(tree)
+		} else if key == tcell.KeyEscape {
+			// Cancel search
+			searchMode = false
+			normalLayout.RemoveItem(searchInput)
+			searchInput.SetText("")
+			app.SetFocus(tree)
+		}
+	})
+
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyRune:
@@ -199,9 +221,20 @@ func main() {
 				// switch to search mode if not already in
 				if !searchMode {
 					searchMode = true
-					pages.SwitchToPage("search")
-					return nil
+					// Keep the help at the end
+					normalLayout.RemoveItem(help)
+					normalLayout.
+						AddItem(searchInput, 3, 0, false).
+						AddItem(help, 1, 0, false)
+					currentFocus = searchInput
+					app.SetFocus(currentFocus)
+				} else {
+					searchMode = false
+					normalLayout.RemoveItem(searchInput)
+					currentFocus = tree
+					app.SetFocus(currentFocus)
 				}
+				return nil
 
 			case 'h', 'l':
 				// switch between tree and status
@@ -230,14 +263,6 @@ func main() {
 				status.SetBorderColor(tcell.ColorWhite)
 			}
 			app.SetFocus(currentFocus)
-			return nil
-
-		case tcell.KeyEscape:
-			searchMode = false
-			pages.SwitchToPage("normal")
-			currentFocus = tree
-			tree.SetBorderColor(tcell.ColorGreen)
-			app.SetFocus(tree)
 			return nil
 		}
 
