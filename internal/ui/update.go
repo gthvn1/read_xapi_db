@@ -46,12 +46,12 @@ func UpdateStatus(tv *tview.Table, n *xapidb.Node) {
 	row := 0
 
 	// Name
-	tv.SetCell(row, 0, tview.NewTableCell("[yellow]Name[white]"))
-	tv.SetCell(row, 1, tview.NewTableCell(n.Name))
+	tv.SetCell(row, 0, tview.NewTableCell("Name").SetTextColor(tcell.ColorYellow))
+	tv.SetCell(row, 1, tview.NewTableCell(n.Name).SetTextColor(tcell.ColorWhite))
 	row++
 
 	// Attributes
-	tv.SetCell(row, 0, tview.NewTableCell("[yellow]Attributes[white]"))
+	tv.SetCell(row, 0, tview.NewTableCell("Attributes").SetTextColor(tcell.ColorYellow))
 	row++
 
 	if len(n.Attr) > 0 {
@@ -64,13 +64,14 @@ func UpdateStatus(tv *tview.Table, n *xapidb.Node) {
 
 		for _, k := range keys {
 			v := n.Attr[k]
-			keyCell := tview.NewTableCell("  [orange]" + k + "[white]")
-			valCell := tview.NewTableCell(v)
+			keyCell := tview.NewTableCell("  " + k).SetTextColor(tcell.ColorOrange)
+			valCell := tview.NewTableCell(v).SetTextColor(tcell.ColorWhite)
 
 			// Highlight OpaqueRefs that we will able to follow (WIP)
 			if strings.HasPrefix(v, "OpaqueRef:") {
-				valCell = tview.NewTableCell("[blue]" + v + "[white]")
+				valCell = tview.NewTableCell(v).SetTextColor(tcell.ColorBlue)
 				valCell.SetReference(v) // Store the raw string to be able to follow the OpaqueRef
+				// TODO: as we are now using SetTextColor to set color using name should be ok
 				valCell.SetSelectable(true)
 			}
 
@@ -79,15 +80,10 @@ func UpdateStatus(tv *tview.Table, n *xapidb.Node) {
 
 			row++
 		}
-	} else {
-		tv.SetCell(row, 0, tview.NewTableCell("[yellow]Attributes[white]"))
-		tv.SetCell(row, 1, tview.NewTableCell("(none)"))
-
-		row++
 	}
 
 	// Children count
-	tv.SetCell(row, 0, tview.NewTableCell("[yellow]Children[white]"))
+	tv.SetCell(row, 0, tview.NewTableCell("Children").SetTextColor(tcell.ColorYellow))
 	tv.SetCell(row, 1, tview.NewTableCell(fmt.Sprintf("%d", len(n.Children))))
 	row++
 
@@ -103,7 +99,7 @@ func UpdateStatus(tv *tview.Table, n *xapidb.Node) {
 		cur = cur.Parent
 	}
 
-	tv.SetCell(row, 0, tview.NewTableCell("[yellow]Path[white]"))
+	tv.SetCell(row, 0, tview.NewTableCell("Path").SetTextColor(tcell.ColorYellow))
 	tv.SetCell(row, 1, tview.NewTableCell(path))
 }
 
