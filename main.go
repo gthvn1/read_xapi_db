@@ -102,15 +102,24 @@ func main() {
 		AddItem(status, statusPaneWidth, 0, false)
 
 	// We create 2 pages so we will be able to switch between
-	// normal view and search view (TODO: search view has been removed)
+	// normal view and search view. Switch view is just normal view with
+	// search bar on its top.
 	normalLayout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(mainLayout, 0, 1, true).
 		AddItem(debugView, debugHeight, 0, false).
 		AddItem(help, helpHeight, 0, false)
 
+	searchLayout := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(searchInput, searchHeight, 0, false). // keep search at the top
+		AddItem(mainLayout, 0, 1, true).
+		AddItem(debugView, debugHeight, 0, false).
+		AddItem(help, helpHeight, 0, false)
+
 	pages := tview.NewPages().
-		AddPage("normal", normalLayout, true, true)
+		AddPage("normal", normalLayout, true, true).
+		AddPage("search", searchLayout, true, false)
 
 	tview.Styles = theme.GruvboxDark
 
@@ -231,7 +240,7 @@ func main() {
 		case tcell.KeyRune:
 			switch event.Rune() {
 			case 'q':
-				if !searchMode {
+				if currentFocus != searchInput {
 					app.Stop()
 					return nil
 				}
@@ -240,16 +249,12 @@ func main() {
 				// switch to search mode if not already in
 				if !searchMode {
 					searchMode = true
-					// Keep the help at the end
-					normalLayout.RemoveItem(help)
-					normalLayout.
-						AddItem(searchInput, searchHeight, 0, false).
-						AddItem(help, helpHeight, 0, false)
+					pages.SwitchToPage("search")
 					currentFocus = searchInput
 					app.SetFocus(currentFocus)
 				} else {
 					searchMode = false
-					normalLayout.RemoveItem(searchInput)
+					pages.SwitchToPage("normal")
 					currentFocus = tree
 					app.SetFocus(currentFocus)
 				}
