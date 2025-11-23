@@ -83,7 +83,6 @@ func DoneSearchCallback(
 	searchInput *tview.InputField,
 	debugView *tview.TextView,
 	db *xapidb.DB,
-	searchMode *bool,
 	pages *tview.Pages,
 ) func(key tcell.Key) {
 	return func(key tcell.Key) {
@@ -117,7 +116,6 @@ func DoneSearchCallback(
 
 		case tcell.KeyEscape:
 			// Cancel search
-			*searchMode = false
 			pages.SwitchToPage("normal")
 			searchInput.SetText("")
 			app.SetFocus(tree)
@@ -133,9 +131,11 @@ func InputCaptureCallback(
 	searchInput *tview.InputField,
 	pages *tview.Pages,
 	currentFocus *tview.Primitive,
-	searchMode *bool,
 ) func(event *tcell.EventKey) *tcell.EventKey {
 	return func(event *tcell.EventKey) *tcell.EventKey {
+		currentPage, _ := pages.GetFrontPage()
+		inSearchMode := currentPage == "search"
+
 		switch event.Key() {
 		case tcell.KeyRune:
 			switch event.Rune() {
@@ -147,13 +147,11 @@ func InputCaptureCallback(
 
 			case '/':
 				// switch to search mode if not already in
-				if !*searchMode {
-					*searchMode = true
+				if !inSearchMode {
 					pages.SwitchToPage("search")
 					*currentFocus = searchInput
 					app.SetFocus(*currentFocus)
 				} else {
-					*searchMode = false
 					pages.SwitchToPage("normal")
 					*currentFocus = tree
 					app.SetFocus(*currentFocus)
@@ -166,7 +164,7 @@ func InputCaptureCallback(
 			}
 
 		case tcell.KeyTab:
-			if *searchMode {
+			if inSearchMode {
 				*currentFocus = ToggleFocus(app, currentFocus, tree, status, searchInput)
 			} else {
 				*currentFocus = ToggleFocus(app, currentFocus, tree, status)

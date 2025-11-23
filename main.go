@@ -125,8 +125,6 @@ func main() {
 
 	// Track which pane has focus
 	var currentFocus tview.Primitive = tree
-	// TODO: we can probably check the page instead of using searchMode
-	searchMode := false
 
 	// Set initial focus
 	tree.SetBorderColor(tcell.ColorGreen)
@@ -135,8 +133,8 @@ func main() {
 	// Set callbacks
 	tree.SetSelectedFunc(ui.SelectedTreeCallback(status))
 	status.SetSelectedFunc(ui.SelectedStatusCallback(status, debugView, app, tree, db))
-	searchInput.SetDoneFunc(ui.DoneSearchCallback(app, tree, status, searchInput, debugView, db, &searchMode, pages))
-	app.SetInputCapture(ui.InputCaptureCallback(app, tree, status, searchInput, pages, &currentFocus, &searchMode))
+	searchInput.SetDoneFunc(ui.DoneSearchCallback(app, tree, status, searchInput, debugView, db, pages))
+	app.SetInputCapture(ui.InputCaptureCallback(app, tree, status, searchInput, pages, &currentFocus))
 
 	if err := app.SetRoot(pages, true).Run(); err != nil {
 		panic(err)
