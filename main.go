@@ -173,7 +173,8 @@ func main() {
 	})
 
 	searchInput.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+		switch key {
+		case tcell.KeyEnter:
 			query := searchInput.GetText()
 
 			if strings.HasPrefix(query, "OpaqueRef") {
@@ -198,7 +199,8 @@ func main() {
 			normalLayout.RemoveItem(searchInput)
 			searchInput.SetText("") // Clear for next time
 			app.SetFocus(tree)
-		} else if key == tcell.KeyEscape {
+
+		case tcell.KeyEscape:
 			// Cancel search
 			searchMode = false
 			normalLayout.RemoveItem(searchInput)
