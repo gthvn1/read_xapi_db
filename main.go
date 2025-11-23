@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -132,107 +131,9 @@ func main() {
 	tree.SetBorderColor(tcell.ColorGreen)
 	status.SetBorderColor(tcell.ColorWhite)
 
-	// -------------------------------------------------------------------
-	// Callbacks
-	// -------------------------------------------------------------------
-
-	// This function is called when the user selects status
-	// by hitting Enter when selected
-	selectedStatusCallback := func(row, column int) {
-		valueCell := status.GetCell(row, 1)
-		if valueCell == nil {
-			return
-		}
-
-		text := valueCell.Text
-
-		// Has we have color on OpaqueRef we use the reference to get the
-		// raw string (it has been set during update). If there is no ref
-		// keep using the text.
-		if ref := valueCell.GetReference(); ref != nil {
-			text = ref.(string)
-		}
-
-		debugView.Clear()
-		fmt.Fprintf(debugView, "Text: %s (len=%d)", text, len(text))
-		if len(text) > 0 {
-			preview := text[:min(3, len(text))]
-			fmt.Fprintf(debugView, "\nFirst 3 chars: %q", preview)
-		}
-
-		if strings.HasPrefix(text, "OpaqueRef") {
-			if retString := ui.FollowOpaqueRef(app, tree, db, text); retString == "done" {
-				fmt.Fprintf(debugView, "\n[green]Found the opaque reference")
-			} else {
-				fmt.Fprintf(debugView, "\n[red]%s", retString)
-			}
-		} else {
-			fmt.Fprintf(debugView, "\n[blue]No match")
-		}
-	}
-
-	// This function is called when the user selects tree
-	// by hitting Enter when selected
-	selectedTreeCallback := func(tn *tview.TreeNode) {
-		// We are always setting a reference so let panic
-		// if it is not the case...
-		node := tn.GetReference().(*xapidb.Node)
-
-		ui.UpdateStatus(status, node)
-
-		// Load children if not already loaded
-		if len(tn.GetChildren()) == 0 && len(node.Children) > 0 {
-			ui.LoadChildren(tn, node)
-			tn.SetExpanded(false)
-		}
-
-		// Collapse if visible, expand if collapsed.
-		tn.SetExpanded(!tn.IsExpanded())
-	}
-
-	// handler which is called when the user is done entering text.
-	// The callback function is provided with the key that was pressed,
-	doneSearchCallback := func(key tcell.Key) {
-		switch key {
-		case tcell.KeyEnter:
-			query := searchInput.GetText()
-
-			if strings.HasPrefix(query, "OpaqueRef") {
-				// Follow the reference
-				result := ui.FollowOpaqueRef(app, tree, db, query)
-				debugView.Clear()
-				fmt.Fprintf(debugView, "[yellow]Search:[white] %s\n", query)
-				if result == "done" {
-					// Update status
-					if currentNode := tree.GetCurrentNode(); currentNode != nil {
-						if ref := currentNode.GetReference(); ref != nil {
-							node := ref.(*xapidb.Node)
-							ui.UpdateStatus(status, node)
-						}
-					}
-					fmt.Fprintf(debugView, "[green]Found reference!")
-				} else {
-					fmt.Fprintf(debugView, "[red]%s", result)
-				}
-			} else {
-				// TODO: General text search in nodes
-				debugView.Clear()
-				fmt.Fprintf(debugView, "[yellow]Searching for:[white] %s\n", query)
-				fmt.Fprintf(debugView, "[blue]Text search not implemented yet")
-			}
-
-		case tcell.KeyEscape:
-			// Cancel search
-			searchMode = false
-			normalLayout.RemoveItem(searchInput)
-			searchInput.SetText("")
-			app.SetFocus(tree)
-		}
-	}
-
-	tree.SetSelectedFunc(selectedTreeCallback)
-	status.SetSelectedFunc(selectedStatusCallback)
-	searchInput.SetDoneFunc(doneSearchCallback)
+	tree.SetSelectedFunc(ui.SelectedTreeCallback(status))
+	status.SetSelectedFunc(ui.SelectedStatusCallback(status, debugView, app, tree, db))
+	searchInput.SetDoneFunc(ui.DoneSearchCallback(app, tree, status, searchInput, debugView, db, &searchMode, pages))
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
