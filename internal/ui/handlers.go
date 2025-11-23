@@ -124,3 +124,56 @@ func DoneSearchCallback(
 		}
 	}
 }
+
+// InputCaptureCallback handles global keyboard input
+func InputCaptureCallback(
+	app *tview.Application,
+	tree *tview.TreeView,
+	status *tview.Table,
+	searchInput *tview.InputField,
+	pages *tview.Pages,
+	currentFocus *tview.Primitive,
+	searchMode *bool,
+) func(event *tcell.EventKey) *tcell.EventKey {
+	return func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyRune:
+			switch event.Rune() {
+			case 'q':
+				if *currentFocus != searchInput {
+					app.Stop()
+					return nil
+				}
+
+			case '/':
+				// switch to search mode if not already in
+				if !*searchMode {
+					*searchMode = true
+					pages.SwitchToPage("search")
+					*currentFocus = searchInput
+					app.SetFocus(*currentFocus)
+				} else {
+					*searchMode = false
+					pages.SwitchToPage("normal")
+					*currentFocus = tree
+					app.SetFocus(*currentFocus)
+				}
+				return nil
+
+			case 'h', 'l':
+				*currentFocus = ToggleFocus(app, currentFocus, tree, status)
+				return nil
+			}
+
+		case tcell.KeyTab:
+			if *searchMode {
+				*currentFocus = ToggleFocus(app, currentFocus, tree, status, searchInput)
+			} else {
+				*currentFocus = ToggleFocus(app, currentFocus, tree, status)
+			}
+			return nil
+		}
+
+		return event
+	}
+}

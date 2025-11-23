@@ -125,57 +125,18 @@ func main() {
 
 	// Track which pane has focus
 	var currentFocus tview.Primitive = tree
+	// TODO: we can probably check the page instead of using searchMode
 	searchMode := false
 
 	// Set initial focus
 	tree.SetBorderColor(tcell.ColorGreen)
 	status.SetBorderColor(tcell.ColorWhite)
 
+	// Set callbacks
 	tree.SetSelectedFunc(ui.SelectedTreeCallback(status))
 	status.SetSelectedFunc(ui.SelectedStatusCallback(status, debugView, app, tree, db))
 	searchInput.SetDoneFunc(ui.DoneSearchCallback(app, tree, status, searchInput, debugView, db, &searchMode, pages))
-
-	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyRune:
-			switch event.Rune() {
-			case 'q':
-				if currentFocus != searchInput {
-					app.Stop()
-					return nil
-				}
-
-			case '/':
-				// switch to search mode if not already in
-				if !searchMode {
-					searchMode = true
-					pages.SwitchToPage("search")
-					currentFocus = searchInput
-					app.SetFocus(currentFocus)
-				} else {
-					searchMode = false
-					pages.SwitchToPage("normal")
-					currentFocus = tree
-					app.SetFocus(currentFocus)
-				}
-				return nil
-
-			case 'h', 'l':
-				currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status)
-				return nil
-			}
-
-		case tcell.KeyTab:
-			if searchMode {
-				currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status, searchInput)
-			} else {
-				currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status)
-			}
-			return nil
-		}
-
-		return event
-	})
+	app.SetInputCapture(ui.InputCaptureCallback(app, tree, status, searchInput, pages, &currentFocus, &searchMode))
 
 	if err := app.SetRoot(pages, true).Run(); err != nil {
 		panic(err)
