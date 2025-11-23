@@ -255,14 +255,16 @@ func main() {
 				return nil
 
 			case 'h', 'l':
-				// switch between tree and status
 				currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status)
 				return nil
 			}
 
 		case tcell.KeyTab:
-			// switch between tree and status
-			currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status)
+			if searchMode {
+				currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status, searchInput)
+			} else {
+				currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status)
+			}
 			return nil
 		}
 
