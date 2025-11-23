@@ -127,26 +127,9 @@ func main() {
 	// Callbacks
 	// -------------------------------------------------------------------
 
-	// This function is called when the user selects this
-	// node by hitting Enter when selected
-	tree.SetSelectedFunc(func(tn *tview.TreeNode) {
-		// We are always setting a reference so let panic
-		// if it is not the case...
-		node := tn.GetReference().(*xapidb.Node)
-
-		ui.UpdateStatus(status, node)
-
-		// Load children if not already loaded
-		if len(tn.GetChildren()) == 0 && len(node.Children) > 0 {
-			ui.LoadChildren(tn, node)
-			tn.SetExpanded(false)
-		}
-
-		// Collapse if visible, expand if collapsed.
-		tn.SetExpanded(!tn.IsExpanded())
-	})
-
-	status.SetSelectedFunc(func(row, column int) {
+	// This function is called when the user selects status
+	// by hitting Enter when selected
+	selectedStatusCallback := func(row, column int) {
 		valueCell := status.GetCell(row, 1)
 		if valueCell == nil {
 			return
@@ -177,10 +160,30 @@ func main() {
 		} else {
 			fmt.Fprintf(debugView, "\n[blue]No match")
 		}
+	}
 
-	})
+	// This function is called when the user selects tree
+	// by hitting Enter when selected
+	selectedTreeCallback := func(tn *tview.TreeNode) {
+		// We are always setting a reference so let panic
+		// if it is not the case...
+		node := tn.GetReference().(*xapidb.Node)
 
-	searchInput.SetDoneFunc(func(key tcell.Key) {
+		ui.UpdateStatus(status, node)
+
+		// Load children if not already loaded
+		if len(tn.GetChildren()) == 0 && len(node.Children) > 0 {
+			ui.LoadChildren(tn, node)
+			tn.SetExpanded(false)
+		}
+
+		// Collapse if visible, expand if collapsed.
+		tn.SetExpanded(!tn.IsExpanded())
+	}
+
+	// handler which is called when the user is done entering text.
+	// The callback function is provided with the key that was pressed,
+	doneSearchCallback := func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
 			query := searchInput.GetText()
@@ -191,6 +194,13 @@ func main() {
 				debugView.Clear()
 				fmt.Fprintf(debugView, "[yellow]Search:[white] %s\n", query)
 				if result == "done" {
+					// Update status
+					if currentNode := tree.GetCurrentNode(); currentNode != nil {
+						if ref := currentNode.GetReference(); ref != nil {
+							node := ref.(*xapidb.Node)
+							ui.UpdateStatus(status, node)
+						}
+					}
 					fmt.Fprintf(debugView, "[green]Found reference!")
 				} else {
 					fmt.Fprintf(debugView, "[red]%s", result)
@@ -209,7 +219,11 @@ func main() {
 			searchInput.SetText("")
 			app.SetFocus(tree)
 		}
-	})
+	}
+
+	tree.SetSelectedFunc(selectedTreeCallback)
+	status.SetSelectedFunc(selectedStatusCallback)
+	searchInput.SetDoneFunc(doneSearchCallback)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
