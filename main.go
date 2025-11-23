@@ -19,12 +19,7 @@ import (
 func main() {
 	args := args.GetArgs()
 
-	var (
-		data []byte
-		err  error
-	)
-
-	data, err = fetch.DB(args)
+	data, err := fetch.DB(args)
 	if err != nil {
 		if args.Hostname == "" {
 			fmt.Printf("failed to read %s: %s\n", args.FileName, err)
@@ -36,13 +31,13 @@ func main() {
 
 	fmt.Printf("Read %d bytes from %s\n", len(data), args.FileName)
 
-	DB, parse_err := xapidb.ParseXapiDB(data)
-	if parse_err != nil && parse_err != io.EOF {
-		fmt.Printf("failed to parse %s: %s\n", args.FileName, parse_err)
+	db, err := xapidb.ParseXapiDB(data)
+	if err != nil && err != io.EOF {
+		fmt.Printf("failed to parse %s: %s\n", args.FileName, err)
 		os.Exit(1)
 	}
 
-	rootNode := DB.Root
+	rootNode := db.Root
 
 	// Instead of printing the tree we will try to use the demo of navigable
 	// tree view of current dir: https://github.com/rivo/tview/wiki/TreeView
@@ -58,6 +53,13 @@ func main() {
 	} else {
 		tree.SetCurrentNode(rootTree)
 	}
+
+	const (
+		statusPaneWidth = 75
+		searchHeight    = 3
+		debugHeight     = 5
+		helpHeight      = 1
+	)
 
 	// Set border and title are done separatly otherwise the type of tree is
 	// modified to tview.Box instead of TreeView !!!
@@ -77,7 +79,6 @@ func main() {
 	// Add search input (initially hidden)
 	searchInput := tview.NewInputField()
 	searchInput.SetLabel("Seach: ").
-		SetFieldWidth(50).
 		SetBorder(true).
 		SetTitle("Search")
 
@@ -97,15 +98,15 @@ func main() {
 	mainLayout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(tree, 0, 1, true).
-		AddItem(status, 75, 0, false)
+		AddItem(status, statusPaneWidth, 0, false)
 
 	// We create 2 pages so we will be able to switch between
 	// normal view and search view (TODO: search view has been removed)
 	normalLayout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(mainLayout, 0, 1, true).
-		AddItem(debugView, 5, 0, false).
-		AddItem(help, 1, 0, false)
+		AddItem(debugView, debugHeight, 0, false).
+		AddItem(help, helpHeight, 0, false)
 
 	pages := tview.NewPages().
 		AddPage("normal", normalLayout, true, true)
@@ -158,10 +159,13 @@ func main() {
 
 		debugView.Clear()
 		fmt.Fprintf(debugView, "Text: %s (len=%d)", text, len(text))
-		fmt.Fprintf(debugView, "\nFirst 3 chars: %q", text[:min(3, len(text))])
+		if len(text) > 0 {
+			preview := text[:min(3, len(text))]
+			fmt.Fprintf(debugView, "\nFirst 3 chars: %q", preview)
+		}
 
 		if strings.HasPrefix(text, "OpaqueRef") {
-			if retString := ui.FollowOpaqueRef(app, tree, DB, text); retString == "done" {
+			if retString := ui.FollowOpaqueRef(app, tree, db, text); retString == "done" {
 				fmt.Fprintf(debugView, "\n[green]Found the opaque reference")
 			} else {
 				fmt.Fprintf(debugView, "\n[red]%s", retString)
@@ -179,7 +183,7 @@ func main() {
 
 			if strings.HasPrefix(query, "OpaqueRef") {
 				// Follow the reference
-				result := ui.FollowOpaqueRef(app, tree, DB, query)
+				result := ui.FollowOpaqueRef(app, tree, db, query)
 				debugView.Clear()
 				fmt.Fprintf(debugView, "[yellow]Search:[white] %s\n", query)
 				if result == "done" {
@@ -226,8 +230,8 @@ func main() {
 					// Keep the help at the end
 					normalLayout.RemoveItem(help)
 					normalLayout.
-						AddItem(searchInput, 3, 0, false).
-						AddItem(help, 1, 0, false)
+						AddItem(searchInput, searchHeight, 0, false).
+						AddItem(help, helpHeight, 0, false)
 					currentFocus = searchInput
 					app.SetFocus(currentFocus)
 				} else {
