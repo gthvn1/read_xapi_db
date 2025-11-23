@@ -69,11 +69,12 @@ func main() {
 
 	// We add a status view to print all row attributes for example
 	status := tview.NewTable()
-	status.SetBorders(true).
+	status.SetBorders(false).
 		SetSelectable(true, false).
 		SetSelectedStyle(tcell.Style{}.
 			Background(tcell.NewHexColor(0x504945)).
 			Foreground(tcell.NewHexColor(0xfabd2f))).
+		SetBorder(true).
 		SetTitle("Attributes")
 
 	// Add search input (initially hidden)
