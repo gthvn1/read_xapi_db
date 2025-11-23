@@ -16,6 +16,8 @@ SSH/SFTP**.
 - View attributes sorted alphabetically.
 - **NEW:** Fetch the XAPI DB directly from a remote XCP-ng host via SSH/SFTP.
 - **NEW:** Follow cross-references (`OpaqueRef:*`) between rows by pressing ENTER.
+- **TODO:** Add search using UUID
+- **TODO:** Use Go SDK to get live information about XAPI objects
 
 ## Installation
 

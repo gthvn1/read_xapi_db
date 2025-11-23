@@ -55,10 +55,9 @@ func main() {
 	}
 
 	const (
-		statusPaneWidth = 75
-		searchHeight    = 3
-		debugHeight     = 5
-		helpHeight      = 1
+		searchHeight = 3
+		debugHeight  = 5
+		helpHeight   = 1
 	)
 
 	// Set border and title are done separatly otherwise the type of tree is
@@ -99,7 +98,7 @@ func main() {
 	mainLayout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(tree, 0, 1, true).
-		AddItem(status, statusPaneWidth, 0, false)
+		AddItem(status, 0, 1, false)
 
 	// We create 2 pages so we will be able to switch between
 	// normal view and search view. Switch view is just normal view with
