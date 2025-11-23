@@ -11,17 +11,32 @@ import (
 	"example.com/readxapidb/internal/xapidb"
 )
 
-func ToggleFocus(app *tview.Application, current *tview.Primitive, tree *tview.TreeView, status *tview.Table) tview.Primitive {
-	if *current == tree {
-		*current = status
-		tree.SetBorderColor(tcell.ColorWhite)
-		status.SetBorderColor(tcell.ColorGreen)
-	} else {
-		*current = tree
-		tree.SetBorderColor(tcell.ColorGreen)
-		status.SetBorderColor(tcell.ColorWhite)
+func ToggleFocus(app *tview.Application, current *tview.Primitive, items ...tview.Primitive) tview.Primitive {
+	// Find current
+	currentIdx := -1
+	for i, item := range items {
+		if *current == item {
+			currentIdx = i
+			break
+		}
 	}
+
+	nextIdx := (currentIdx + 1) % len(items)
+
+	// Update all borders
+	for i, item := range items {
+		if boxItem, ok := item.(interface{ SetBorderColor(tcell.Color) *tview.Box }); ok {
+			if i == nextIdx {
+				boxItem.SetBorderColor(tcell.ColorGreen)
+			} else {
+				boxItem.SetBorderColor(tcell.ColorWhite)
+			}
+		}
+	}
+
+	*current = items[nextIdx]
 	app.SetFocus(*current)
+
 	return *current
 }
 
