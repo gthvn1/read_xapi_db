@@ -5,10 +5,25 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"example.com/readxapidb/internal/xapidb"
 )
+
+func ToggleFocus(app *tview.Application, current *tview.Primitive, tree *tview.TreeView, status *tview.Table) tview.Primitive {
+	if *current == tree {
+		*current = status
+		tree.SetBorderColor(tcell.ColorWhite)
+		status.SetBorderColor(tcell.ColorGreen)
+	} else {
+		*current = tree
+		tree.SetBorderColor(tcell.ColorGreen)
+		status.SetBorderColor(tcell.ColorWhite)
+	}
+	app.SetFocus(*current)
+	return *current
+}
 
 func UpdateStatus(tv *tview.Table, n *xapidb.Node) {
 	tv.Clear()

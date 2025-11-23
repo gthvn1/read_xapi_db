@@ -119,6 +119,10 @@ func main() {
 	var currentFocus tview.Primitive = tree
 	searchMode := false
 
+	// Set initial focus
+	tree.SetBorderColor(tcell.ColorGreen)
+	status.SetBorderColor(tcell.ColorWhite)
+
 	// -------------------------------------------------------------------
 	// Callbacks
 	// -------------------------------------------------------------------
@@ -198,12 +202,6 @@ func main() {
 				fmt.Fprintf(debugView, "[blue]Text search not implemented yet")
 			}
 
-			// Exit search mode
-			searchMode = false
-			normalLayout.RemoveItem(searchInput)
-			searchInput.SetText("") // Clear for next time
-			app.SetFocus(tree)
-
 		case tcell.KeyEscape:
 			// Cancel search
 			searchMode = false
@@ -244,40 +242,18 @@ func main() {
 
 			case 'h', 'l':
 				// switch between tree and status
-				if currentFocus == tree {
-					currentFocus = status
-					tree.SetBorderColor(tcell.ColorWhite)
-					status.SetBorderColor(tcell.ColorGreen)
-				} else {
-					currentFocus = tree
-					tree.SetBorderColor(tcell.ColorGreen)
-					status.SetBorderColor(tcell.ColorWhite)
-				}
-				app.SetFocus(currentFocus)
+				currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status)
 				return nil
 			}
 
 		case tcell.KeyTab:
 			// switch between tree and status
-			if currentFocus == tree {
-				currentFocus = status
-				tree.SetBorderColor(tcell.ColorWhite)
-				status.SetBorderColor(tcell.ColorGreen)
-			} else {
-				currentFocus = tree
-				tree.SetBorderColor(tcell.ColorGreen)
-				status.SetBorderColor(tcell.ColorWhite)
-			}
-			app.SetFocus(currentFocus)
+			currentFocus = ui.ToggleFocus(app, &currentFocus, tree, status)
 			return nil
 		}
 
 		return event
 	})
-
-	// Set initial focus
-	tree.SetBorderColor(tcell.ColorGreen)
-	status.SetBorderColor(tcell.ColorWhite)
 
 	if err := app.SetRoot(pages, true).Run(); err != nil {
 		panic(err)
